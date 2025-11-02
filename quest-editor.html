@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RS3 Quest Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1a1410;
+            color: #e6d5b8;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #2a1f1a 0%, #1f1810 100%);
+            border: 3px solid #4a3820;
+            border-radius: 8px;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #d4af37;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #9a8a6a;
+            margin-bottom: 30px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 2px solid #6a5438;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5a7fb8 0%, #4a6fa8 100%);
+            border-color: #6a8fc8;
+            color: #fff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4a7c59 0%, #3a6c49 100%);
+            border-color: #5a8c69;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #b84a4a 0%, #a83a3a 100%);
+            border-color: #c85a5a;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #5a4428 0%, #4a3820 100%);
+            border-color: #6a5438;
+            color: #f4e4c1;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: rgba(61, 40, 23, 0.6);
+            border: 2px solid #5a4428;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #9a8a6a;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #d4af37;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .quest-form {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #5a4428;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: #c9b896;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #5a4428;
+            border-radius: 6px;
+            color: #e6d5b8;
+            font-size: 1em;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .quest-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .quest-item {
+            background: linear-gradient(135deg, rgba(61, 40, 23, 0.6) 0%, rgba(42, 31, 26, 0.6) 100%);
+            border: 2px solid #4a3820;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quest-info {
+            flex: 1;
+        }
+
+        .quest-name {
+            color: #f4e4c1;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .quest-meta {
+            color: #9a8a6a;
+            font-size: 0.9em;
+        }
+
+        .quest-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+
+        .export-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #5a4428;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .export-box textarea {
+            width: 100%;
+            min-height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .info-box {
+            background: rgba(90, 68, 40, 0.2);
+            border: 2px solid #5a4428;
+            border-left: 4px solid #d4af37;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .difficulty-novice { background: #4a7c59; color: #fff; }
+        .difficulty-intermediate { background: #5a7fb8; color: #fff; }
+        .difficulty-experienced { background: #c87a28; color: #fff; }
+        .difficulty-master { background: #b84a4a; color: #fff; }
+        .difficulty-grandmaster { background: #8a4a8a; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗡️ RS3 Quest Database Editor</h1>
+        <p class="subtitle">Manage all quests for your RS3 Ultimate Helper plugin</p>
+
+        <div class="info-box">
+            <strong>How to use:</strong> Add/edit quests here, then export the quests.js file and upload it to your GitHub repository. The main plugin will automatically use the updated quest list!
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Total Quests</div>
+                <div class="stat-value" id="totalQuests">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Quest Points</div>
+                <div class="stat-value" id="totalQP">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Last Modified</div>
+                <div class="stat-value" style="font-size: 0.9em;" id="lastModified">Never</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-success" onclick="showAddForm()">➕ Add New Quest</button>
+            <button class="btn btn-primary" onclick="exportToFile()">📥 Export quests.js File</button>
+            <button class="btn btn-secondary" onclick="importFromFile()">📤 Import quests.json</button>
+            <button class="btn btn-secondary" onclick="loadFromWiki()">🌐 Load All from Wiki</button>
+            <button class="btn btn-danger" onclick="clearAll()">🗑️ Clear All Quests</button>
+        </div>
+
+        <!-- Add/Edit Quest Form -->
+        <div class="quest-form" id="questForm" style="display: none;">
+            <h2 style="color: #d4af37; margin-bottom: 20px;">Add New Quest</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quest Name *</label>
+                    <input type="text" id="questName" placeholder="Cook's Assistant" required>
+                </div>
+                <div class="form-group">
+                    <label>Difficulty *</label>
+                    <select id="questDifficulty">
+                        <option value="novice">Novice</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="experienced">Experienced</option>
+                        <option value="master">Master</option>
+                        <option value="grandmaster">Grandmaster</option>
+                        <option value="special">Special</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quest Points *</label>
+                    <input type="number" id="questPoints" min="0" max="10" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Length</label>
+                    <select id="questLength">
+                        <option value="Very Short">Very Short</option>
+                        <option value="Short">Short</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Long">Long</option>
+                        <option value="Very Long">Very Long</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="questDescription" placeholder="Help the cook in Lumbridge Castle..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Requirements (comma-separated, e.g., "Dragon Slayer, Demon Slayer")</label>
+                <input type="text" id="questRequirements" placeholder="Quest1, Quest2">
+            </div>
+
+            <div class="form-group">
+                <label>Skill Requirements (e.g., "Attack:40, Defence:30")</label>
+                <input type="text" id="questSkillReqs" placeholder="Attack:40, Defence:30">
+            </div>
+
+            <div class="form-group">
+                <label>Rewards (comma-separated)</label>
+                <textarea id="questRewards" placeholder="2,000 XP, Item reward"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Series (optional)</label>
+                    <input type="text" id="questSeries" placeholder="Mahjarrat, Myreque, etc.">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-success" onclick="saveQuest()">💾 Save Quest</button>
+                <button class="btn btn-secondary" onclick="cancelEdit()">❌ Cancel</button>
+            </div>
+        </div>
+
+        <!-- Quest List -->
+        <div>
+            <h2 style="color: #d4af37; margin-bottom: 15px;">Current Quests</h2>
+            <div class="quest-list" id="questList">
+                <!-- Quests will be listed here -->
+            </div>
+        </div>
+
+        <!-- Export Box -->
+        <div class="export-box" id="exportBox" style="display: none;">
+            <h3 style="color: #d4af37; margin-bottom: 10px;">Generated quests.js File</h3>
+            <p style="color: #9a8a6a; margin-bottom: 10px;">Copy this entire content and save it as <strong>quests.js</strong></p>
+            <textarea id="exportText" readonly></textarea>
+            <div class="actions" style="margin-top: 15px;">
+                <button class="btn btn-primary" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                <button class="btn btn-success" onclick="downloadFile()">💾 Download File</button>
+                <button class="btn btn-secondary" onclick="closeExport()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="quest-editor.js"></script>
+</body>
+</html>
