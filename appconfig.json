@@ -1,0 +1,21 @@
+{
+  "appName": "RS3 Ultimate Helper",
+  "description": "Quest helper with REAL RS3 stats + ALL your quests from RuneMetrics + Activities + Auto-sync + Quest Editor",
+  "appUrl": "index.html",
+  "configUrl": "appconfig.json",
+  "iconUrl": "",
+  "defaultWidth": 500,
+  "defaultHeight": 700,
+  "minWidth": 400,
+  "minHeight": 550,
+  "maxWidth": 1200,
+  "maxHeight": 1000,
+  "permissions": [
+    "pixel",
+    "overlay",
+    "gamestate"
+  ],
+  "activators": [],
+  "author": "deadlyhour123",
+  "version": "2.1.0"
+}
