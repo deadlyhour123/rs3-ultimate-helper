@@ -1,4 +1,4 @@
-// RS3 Ultimate Helper - Main Application (Themed Version)
+// RS3 Ultimate Helper - Main Application (Enhanced Version with Auto-Sync)
 console.log('RS3 Ultimate Helper loading...');
 
 // Application State
@@ -7,7 +7,8 @@ const AppState = {
     currentFilter: 'all',
     searchQuery: '',
     stats: {},
-    lastSaved: null
+    lastSaved: null,
+    autoSyncEnabled: true
 };
 
 // Load saved progress from localStorage
@@ -19,6 +20,7 @@ function loadProgress() {
             AppState.completedQuests = new Set(data.completedQuests || []);
             AppState.stats = data.stats || {};
             AppState.lastSaved = data.lastUpdated || null;
+            AppState.autoSyncEnabled = data.autoSyncEnabled !== false;
             console.log('Progress loaded:', AppState.completedQuests.size, 'quests completed');
             updateLastSavedDisplay();
         }
@@ -34,7 +36,8 @@ function saveProgress() {
         const data = {
             completedQuests: Array.from(AppState.completedQuests),
             stats: AppState.stats,
-            lastUpdated: now
+            lastUpdated: now,
+            autoSyncEnabled: AppState.autoSyncEnabled
         };
         localStorage.setItem('rs3helper_progress', JSON.stringify(data));
         AppState.lastSaved = now;
@@ -83,10 +86,90 @@ function initApp() {
     renderQuests();
     updateProgress();
     
+    // Listen for stats updates from stats.js
+    window.addEventListener('rs3helper_stats_updated', handleStatsUpdate);
+    
     // Check if we have API quest data (delayed to let stats.js load)
     setTimeout(checkForAPIQuestData, 2000);
     
     console.log('App initialized successfully!');
+}
+
+// Handle stats update event from stats.js
+function handleStatsUpdate(event) {
+    console.log('Stats updated event received');
+    
+    if (AppState.autoSyncEnabled) {
+        // Auto-sync quests if enabled
+        setTimeout(() => {
+            const questList = window.RS3Helper?.stats?.getQuestList();
+            if (questList && questList.length > 0) {
+                autoSyncQuestsFromAPI(questList);
+            }
+        }, 500);
+    }
+}
+
+// Auto-sync quests from API (silent, non-intrusive)
+function autoSyncQuestsFromAPI(questList) {
+    if (!questList || questList.length === 0) return;
+    
+    const completedQuests = questList.filter(q => q.status === 'COMPLETED');
+    let newlySynced = 0;
+    
+    completedQuests.forEach(apiQuest => {
+        // Try to find matching quest in local QUESTS array
+        const localQuest = QUESTS.find(q => 
+            q.name.toLowerCase() === apiQuest.title.toLowerCase() ||
+            q.name.toLowerCase().replace(/['\s-]/g, '') === apiQuest.title.toLowerCase().replace(/['\s-]/g, '') ||
+            q.name.toLowerCase().includes(apiQuest.title.toLowerCase()) ||
+            apiQuest.title.toLowerCase().includes(q.name.toLowerCase())
+        );
+        
+        if (localQuest && !AppState.completedQuests.has(localQuest.id)) {
+            AppState.completedQuests.add(localQuest.id);
+            newlySynced++;
+        }
+    });
+    
+    if (newlySynced > 0) {
+        saveProgress();
+        renderQuests();
+        updateProgress();
+        console.log(`Auto-synced ${newlySynced} new completed quests from RS3 profile`);
+        
+        // Show subtle notification
+        showNotification(`✓ Synced ${newlySynced} completed quests from your RS3 profile`, 'success');
+    }
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4a7c59' : type === 'error' ? '#b84a4a' : '#5a7fb8'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 6px;
+        border: 2px solid ${type === 'success' ? '#5a8c69' : type === 'error' ? '#c85a5a' : '#6a8fc8'};
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // Tab Switching
@@ -122,7 +205,7 @@ function setupQuestList() {
     
     questList.addEventListener('click', (e) => {
         const questItem = e.target.closest('.quest-item');
-        if (questItem) {
+        if (questItem && !e.target.classList.contains('wiki-link')) {
             const questId = parseInt(questItem.getAttribute('data-quest-id'));
             toggleQuestCompletion(questId);
         }
@@ -176,6 +259,13 @@ function setupFilters() {
     });
 }
 
+// Generate wiki link for quest
+function getWikiLink(questName) {
+    // Convert quest name to wiki format
+    const wikiName = questName.replace(/\s+/g, '_').replace(/'/g, '%27');
+    return `https://runescape.wiki/w/${wikiName}/Quick_guide`;
+}
+
 // Render Quests
 function renderQuests() {
     const questList = document.getElementById('questList');
@@ -188,7 +278,8 @@ function renderQuests() {
         if (AppState.searchQuery) {
             const matchesSearch = quest.name.toLowerCase().includes(AppState.searchQuery) ||
                                  quest.description.toLowerCase().includes(AppState.searchQuery) ||
-                                 quest.difficulty.toLowerCase().includes(AppState.searchQuery);
+                                 quest.difficulty.toLowerCase().includes(AppState.searchQuery) ||
+                                 (quest.location && quest.location.toLowerCase().includes(AppState.searchQuery));
             if (!matchesSearch) return false;
         }
         
@@ -220,6 +311,7 @@ function renderQuests() {
         const isCompleted = AppState.completedQuests.has(quest.id);
         const completedClass = isCompleted ? 'completed' : '';
         const completedIcon = isCompleted ? '✓ ' : '';
+        const wikiLink = getWikiLink(quest.name);
         
         // Build requirements text
         let reqText = '';
@@ -233,10 +325,16 @@ function renderQuests() {
             reqText += `<div class="quest-requirements"><strong>Skills:</strong> ${skillReqs}</div>`;
         }
         
+        // Add location if available
+        const locationText = quest.location ? 
+            `<div class="quest-requirements"><strong>📍 Location:</strong> ${quest.location}</div>` : '';
+        
         return `
             <div class="quest-item ${completedClass}" data-quest-id="${quest.id}">
                 <div class="quest-name">
                     ${completedIcon}${quest.name}
+                    <a href="${wikiLink}" target="_blank" class="wiki-link" title="View quick guide on RS Wiki" 
+                       onclick="event.stopPropagation()">📖 Wiki</a>
                 </div>
                 <span class="quest-difficulty difficulty-${quest.difficulty}">
                     ${quest.difficulty}
@@ -246,6 +344,7 @@ function renderQuests() {
                     <strong>Quest Points:</strong> ${quest.questPoints} | 
                     <strong>Length:</strong> ${quest.length}
                 </div>
+                ${locationText}
                 ${reqText}
             </div>
         `;
@@ -356,7 +455,7 @@ function checkForAPIQuestData() {
     }
 }
 
-// Sync quests from API to local tracking
+// Sync quests from API to local tracking (manual)
 function syncQuestsFromAPI() {
     if (!window.RS3Helper || !window.RS3Helper.stats) {
         alert('No quest data available. Please refresh your stats first.');
@@ -382,6 +481,7 @@ function syncQuestsFromAPI() {
         // Try to find matching quest in local QUESTS array
         const localQuest = QUESTS.find(q => 
             q.name.toLowerCase() === apiQuest.title.toLowerCase() ||
+            q.name.toLowerCase().replace(/['\s-]/g, '') === apiQuest.title.toLowerCase().replace(/['\s-]/g, '') ||
             q.name.toLowerCase().includes(apiQuest.title.toLowerCase()) ||
             apiQuest.title.toLowerCase().includes(q.name.toLowerCase())
         );
@@ -432,21 +532,29 @@ function toggleAPIQuestList() {
             
             ${completed.length > 0 ? `
                 <h3 style="color: #4a7c59; margin-top: 20px;">✓ Completed Quests (${completed.length})</h3>
-                ${completed.map(q => `
+                ${completed.map(q => {
+                    const wikiLink = getWikiLink(q.title);
+                    return `
                     <div style="padding: 8px; margin: 5px 0; background: rgba(74, 124, 89, 0.2); border-left: 3px solid #4a7c59; border-radius: 4px;">
                         <strong>${q.title}</strong> - ${q.questPoints} QP
                         ${q.difficulty ? ` | Difficulty: ${q.difficulty}` : ''}
+                        <a href="${wikiLink}" target="_blank" style="margin-left: 10px; color: #d4af37;">📖 Quick Guide</a>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             ` : ''}
             
             ${started.length > 0 ? `
                 <h3 style="color: #c87a28; margin-top: 20px;">⚡ Started Quests (${started.length})</h3>
-                ${started.map(q => `
+                ${started.map(q => {
+                    const wikiLink = getWikiLink(q.title);
+                    return `
                     <div style="padding: 8px; margin: 5px 0; background: rgba(200, 122, 40, 0.2); border-left: 3px solid #c87a28; border-radius: 4px;">
                         <strong>${q.title}</strong> - ${q.questPoints} QP
+                        <a href="${wikiLink}" target="_blank" style="margin-left: 10px; color: #d4af37;">📖 Quick Guide</a>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             ` : ''}
         `;
         
@@ -464,6 +572,17 @@ function setupSettings() {
     const exportBtn = document.getElementById('exportData');
     const importBtn = document.getElementById('importData');
     const detectStatsBtn = document.getElementById('detectStats');
+    const autoSyncCheckbox = document.getElementById('autoSyncQuests');
+    
+    // Load auto-sync setting
+    if (autoSyncCheckbox) {
+        autoSyncCheckbox.checked = AppState.autoSyncEnabled;
+        autoSyncCheckbox.addEventListener('change', (e) => {
+            AppState.autoSyncEnabled = e.target.checked;
+            saveProgress();
+            console.log('Auto-sync', AppState.autoSyncEnabled ? 'enabled' : 'disabled');
+        });
+    }
     
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
@@ -473,7 +592,7 @@ function setupSettings() {
                 completedQuests: Array.from(AppState.completedQuests),
                 stats: AppState.stats,
                 exportDate: new Date().toISOString(),
-                version: '1.0.2'
+                version: '2.2.0'
             };
             
             const dataStr = JSON.stringify(data, null, 2);
@@ -563,6 +682,53 @@ function setupSettings() {
         });
     });
 }
+
+// Add CSS for wiki links and notifications
+const style = document.createElement('style');
+style.textContent = `
+    .wiki-link {
+        display: inline-block;
+        margin-left: 10px;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #d4af37 0%, #aa8a1f 100%);
+        color: #1a1410;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: 600;
+        border: 1px solid #f4e4c1;
+        transition: all 0.3s ease;
+    }
+    
+    .wiki-link:hover {
+        background: linear-gradient(135deg, #f4e4c1 0%, #d4af37 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
