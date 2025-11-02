@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiki Quest Fetcher - RS3 Ultimate Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1a1410;
+            color: #e6d5b8;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #2a1f1a 0%, #1f1810 100%);
+            border: 3px solid #4a3820;
+            border-radius: 8px;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #d4af37;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #9a8a6a;
+            margin-bottom: 30px;
+        }
+
+        .warning-box {
+            background: rgba(200, 122, 40, 0.2);
+            border: 2px solid #c87a28;
+            border-left: 4px solid #c87a28;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: rgba(90, 68, 40, 0.2);
+            border: 2px solid #5a4428;
+            border-left: 4px solid #d4af37;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .success-box {
+            background: rgba(74, 124, 89, 0.2);
+            border: 2px solid #4a7c59;
+            border-left: 4px solid #4a7c59;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 2px solid #6a5438;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5a7fb8 0%, #4a6fa8 100%);
+            border-color: #6a8fc8;
+            color: #fff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4a7c59 0%, #3a6c49 100%);
+            border-color: #5a8c69;
+            color: #fff;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #c87a28 0%, #b86a18 100%);
+            border-color: #d88a38;
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .console-output {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #5a4428;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .console-line {
+            margin: 3px 0;
+            color: #c9b896;
+        }
+
+        .console-line.success {
+            color: #4a7c59;
+        }
+
+        .console-line.error {
+            color: #b84a4a;
+        }
+
+        .console-line.warning {
+            color: #c87a28;
+        }
+
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #5a4428;
+            border-radius: 6px;
+            height: 30px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1410;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Wiki Quest Fetcher</h1>
+        <p class="subtitle">Automatically fetch ALL RuneScape 3 quests from the wiki</p>
+
+        <div class="warning-box">
+            <strong>⚠️ Important Warning:</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>This tool fetches ~268 quests from the RuneScape Wiki</li>
+                <li>The process takes approximately <strong>5-10 minutes</strong></li>
+                <li>Do NOT refresh the page while running</li>
+                <li>Your browser may appear frozen - this is normal</li>
+                <li>Rate limiting: 1 request per second to avoid ban</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <strong>📋 What this tool does:</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>✅ Fetches all quest names from RuneScape Wiki</li>
+                <li>✅ Retrieves quest details (difficulty, points, length)</li>
+                <li>✅ Extracts quest locations and descriptions</li>
+                <li>✅ Parses requirements and rewards</li>
+                <li>✅ Generates quests.js file ready to use</li>
+                <li>✅ Auto-downloads when complete</li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="runTest()" id="testBtn">🧪 Test (3 quests)</button>
+            <button class="btn btn-success" onclick="fetchAllQuests()" id="fetchBtn">🚀 Fetch All Quests</button>
+            <button class="btn btn-warning" onclick="clearConsole()">🗑️ Clear Console</button>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+
+        <div class="success-box" id="successBox">
+            <strong>✅ Success!</strong>
+            <p style="margin-top: 10px;">Quest database has been generated and downloaded!</p>
+            <p><strong>Next steps:</strong></p>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li>Find the downloaded <code>quests_from_wiki.js</code> file</li>
+                <li>Rename it to <code>quests.js</code></li>
+                <li>Upload to your GitHub repo at <code>/js/quests.js</code></li>
+                <li>Your app now has ALL 268 RS3 quests!</li>
+            </ol>
+        </div>
+
+        <div class="console-output" id="console">
+            <div class="console-line">📟 Console ready. Click a button to start.</div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 Tips:</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Test with 3 quests first to verify it works</li>
+                <li>Close other browser tabs to improve performance</li>
+                <li>If fetch fails, wait a few minutes and try again</li>
+                <li>The generated file includes all quest data with locations</li>
+                <li>You can edit the generated file in the Quest Editor</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="wiki-quest-fetcher.js"></script>
+    <script>
+        const consoleEl = document.getElementById('console');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const successBox = document.getElementById('successBox');
+
+        function addConsoleLog(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = message;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearConsole() {
+            consoleEl.innerHTML = '<div class="console-line">📟 Console cleared.</div>';
+            successBox.style.display = 'none';
+            progressBar.style.display = 'none';
+        }
+
+        function updateProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            progressFill.style.width = percentage + '%';
+            progressFill.textContent = `${current}/${total} (${percentage}%)`;
+        }
+
+        async function runTest() {
+            clearConsole();
+            addConsoleLog('🧪 Starting test with 3 quests...', 'info');
+            
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+
+            try {
+                await WikiQuestFetcher.test();
+                addConsoleLog('✅ Test complete! Check above for results.', 'success');
+            } catch (error) {
+                addConsoleLog('❌ Test failed: ' + error.message, 'error');
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        async function fetchAllQuests() {
+            if (!confirm('This will fetch ALL quests from the wiki and may take 5-10 minutes.\n\nAre you sure you want to continue?')) {
+                return;
+            }
+
+            clearConsole();
+            addConsoleLog('🚀 Starting full quest fetch...', 'info');
+            addConsoleLog('⏰ This will take 5-10 minutes. Please wait...', 'warning');
+            
+            const fetchBtn = document.getElementById('fetchBtn');
+            const testBtn = document.getElementById('testBtn');
+            fetchBtn.disabled = true;
+            testBtn.disabled = true;
+            
+            progressBar.style.display = 'block';
+
+            // Override console.log to capture output
+            const originalLog = console.log;
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                const message = args.join(' ');
+                
+                // Determine type
+                let type = 'info';
+                if (message.includes('✅')) type = 'success';
+                if (message.includes('❌')) type = 'error';
+                if (message.includes('⚠️')) type = 'warning';
+                
+                addConsoleLog(message, type);
+                
+                // Update progress if message contains [X/Y]
+                const match = message.match(/\[(\d+)\/(\d+)\]/);
+                if (match) {
+                    updateProgress(parseInt(match[1]), parseInt(match[2]));
+                }
+            };
+
+            try {
+                await WikiQuestFetcher.export();
+                addConsoleLog('✅ All done! File downloaded.', 'success');
+                successBox.style.display = 'block';
+            } catch (error) {
+                addConsoleLog('❌ Fatal error: ' + error.message, 'error');
+                alert('An error occurred. Check the console for details.');
+            } finally {
+                console.log = originalLog;
+                fetchBtn.disabled = false;
+                testBtn.disabled = false;
+            }
+        }
+
+        // Add initial welcome message
+        addConsoleLog('👋 Welcome to the Wiki Quest Fetcher!', 'success');
+        addConsoleLog('📖 This tool fetches all RS3 quests from the RuneScape Wiki', 'info');
+        addConsoleLog('⚠️ Remember: Full fetch takes 5-10 minutes', 'warning');
+    </script>
+</body>
+</html>
