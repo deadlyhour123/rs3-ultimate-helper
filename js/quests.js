@@ -1,4 +1,4 @@
-// RS3 Quest Database
+// RS3 Quest Database - Enhanced with Locations
 const QUESTS = [
     {
         id: 1,
@@ -9,7 +9,8 @@ const QUESTS = [
         length: "Short",
         description: "Help the cook in Lumbridge Castle prepare for a banquet.",
         rewards: ["300 Cooking XP", "Access to the Lumbridge Castle kitchen"],
-        series: "None"
+        series: "None",
+        location: "Lumbridge Castle"
     },
     {
         id: 2,
@@ -20,7 +21,8 @@ const QUESTS = [
         length: "Medium",
         description: "Defeat the powerful demon Delrith.",
         rewards: ["Silverlight sword", "2,812.5 Combat XP"],
-        series: "Demon Slayer"
+        series: "Demon Slayer",
+        location: "Varrock"
     },
     {
         id: 3,
@@ -34,7 +36,8 @@ const QUESTS = [
         length: "Long",
         description: "Slay the dragon Elvarg and become a true hero.",
         rewards: ["18,650 Strength & Defence XP", "Access to Crandor", "Anti-dragon shield"],
-        series: "Dragonkin"
+        series: "Dragonkin",
+        location: "Crandor / Karamja"
     },
     {
         id: 4,
@@ -45,7 +48,8 @@ const QUESTS = [
         length: "Short",
         description: "Help lay a ghost's spirit to rest.",
         rewards: ["1,125 Prayer XP"],
-        series: "None"
+        series: "None",
+        location: "Lumbridge Church"
     },
     {
         id: 5,
@@ -56,7 +60,8 @@ const QUESTS = [
         length: "Short",
         description: "Discover the secrets of rune stones.",
         rewards: ["Ability to craft runes", "250 Runecrafting XP"],
-        series: "Rune Memories"
+        series: "Rune Memories",
+        location: "Wizards' Tower"
     },
     {
         id: 6,
@@ -67,7 +72,8 @@ const QUESTS = [
         length: "Very Short",
         description: "Help a farmer gather wool.",
         rewards: ["150 Crafting XP", "60 coins"],
-        series: "None"
+        series: "None",
+        location: "Lumbridge Farm"
     },
     {
         id: 7,
@@ -78,7 +84,8 @@ const QUESTS = [
         length: "Short",
         description: "Help Romeo and Juliet get together.",
         rewards: ["No XP rewards"],
-        series: "None"
+        series: "None",
+        location: "Varrock"
     },
     {
         id: 8,
@@ -92,7 +99,8 @@ const QUESTS = [
         length: "Medium",
         description: "Help a squire recover a sword.",
         rewards: ["12,725 Smithing XP"],
-        series: "None"
+        series: "None",
+        location: "Falador"
     },
     {
         id: 9,
@@ -106,7 +114,8 @@ const QUESTS = [
         length: "Short",
         description: "Investigate the new developments at the Wizards' Tower.",
         rewards: ["250 Runecrafting XP"],
-        series: "Rune Memories"
+        series: "Rune Memories",
+        location: "Wizards' Tower"
     },
     {
         id: 10,
@@ -117,7 +126,8 @@ const QUESTS = [
         length: "Medium",
         description: "Team up with a friend to find the Shield of Arrav.",
         rewards: ["600 coins", "1 Quest Point"],
-        series: "Mahjarrat"
+        series: "Mahjarrat",
+        location: "Varrock"
     },
     {
         id: 11,
@@ -128,7 +138,8 @@ const QUESTS = [
         length: "Short",
         description: "Help a witch's lab assistant who's been turned into a chicken.",
         rewards: ["300 coins"],
-        series: "None"
+        series: "None",
+        location: "Draynor Manor"
     },
     {
         id: 12,
@@ -139,7 +150,8 @@ const QUESTS = [
         length: "Short",
         description: "Slay the vampyre Count Draynor.",
         rewards: ["4,825 Attack XP"],
-        series: "Myreque"
+        series: "Myreque",
+        location: "Draynor Manor"
     },
     {
         id: 13,
@@ -150,7 +162,8 @@ const QUESTS = [
         length: "Short",
         description: "Collect imp beads for a wizard.",
         rewards: ["875 Magic XP", "Amulet of accuracy"],
-        series: "None"
+        series: "None",
+        location: "Wizards' Tower"
     },
     {
         id: 14,
@@ -161,7 +174,8 @@ const QUESTS = [
         length: "Medium",
         description: "Rescue Prince Ali from Lady Keli.",
         rewards: ["700 coins"],
-        series: "Kharidian Desert"
+        series: "Kharidian Desert",
+        location: "Al Kharid"
     },
     {
         id: 15,
@@ -172,7 +186,8 @@ const QUESTS = [
         length: "Very Short",
         description: "Help dwarf Doric collect materials.",
         rewards: ["1,300 Mining XP", "180 coins"],
-        series: "None"
+        series: "None",
+        location: "North of Falador"
     },
     {
         id: 16,
@@ -186,7 +201,8 @@ const QUESTS = [
         length: "Short",
         description: "Sabotage the Black Knights.",
         rewards: ["2,500 coins"],
-        series: "White Knight"
+        series: "White Knight",
+        location: "North of Falador"
     },
     {
         id: 17,
@@ -197,7 +213,8 @@ const QUESTS = [
         length: "Very Short",
         description: "Help a witch make a potion.",
         rewards: ["325 Magic XP"],
-        series: "None"
+        series: "None",
+        location: "Rimmington"
     },
     {
         id: 18,
@@ -208,7 +225,8 @@ const QUESTS = [
         length: "Short",
         description: "Explore Lumbridge catacombs.",
         rewards: ["Combat XP lamps", "Reborn equipment"],
-        series: "None"
+        series: "None",
+        location: "Lumbridge Catacombs"
     },
     {
         id: 19,
@@ -219,7 +237,8 @@ const QUESTS = [
         length: "Short",
         description: "Help a doctor create a medicine machine.",
         rewards: ["2,000 Crafting XP"],
-        series: "Penguin"
+        series: "Penguin",
+        location: "Ardougne"
     },
     {
         id: 20,
@@ -230,7 +249,8 @@ const QUESTS = [
         length: "Short",
         description: "Find One-Eyed Hector's treasure.",
         rewards: ["450 coins", "1 uncut sapphire"],
-        series: "None"
+        series: "None",
+        location: "Port Sarim"
     }
 ];
 
