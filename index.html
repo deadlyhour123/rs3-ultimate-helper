@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RS3 Ultimate Quest Helper</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>🎯 RS3 Ultimate Helper</h1>
+            <div class="quick-stats">
+                <span id="quest-progress">0/268 Quests</span>
+                <span id="comp-progress">0% Comp</span>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="quests">Quests</button>
+            <button class="tab-btn" data-tab="map">Map</button>
+            <button class="tab-btn" data-tab="tasks">Tasks</button>
+            <button class="tab-btn" data-tab="comp">Comp Cape</button>
+            <button class="tab-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="dashboard-section">
+                <h2>📊 Your Progress</h2>
+                <div class="progress-card">
+                    <h3>Quest Points</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="qp-progress" style="width: 0%"></div>
+                    </div>
+                    <span id="qp-text">0 / 445 QP</span>
+                </div>
+
+                <h3>🎯 Recommended Next Steps</h3>
+                <div id="recommendations" class="recommendations-list">
+                    <p>Loading recommendations...</p>
+                </div>
+
+                <h3>📍 Current Location Detected</h3>
+                <div id="location-info" class="location-card">
+                    <p>Detecting your location...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quests Tab -->
+        <div id="quests-tab" class="tab-content">
+            <div class="search-section">
+                <input type="text" id="quest-search" placeholder="🔍 Search quests...">
+                <select id="quest-filter">
+                    <option value="all">All Quests</option>
+                    <option value="available">Available Now</option>
+                    <option value="started">Started</option>
+                    <option value="completed">Completed</option>
+                    <option value="free">Free-to-Play</option>
+                    <option value="members">Members</option>
+                </select>
+            </div>
+
+            <div id="quest-list" class="quest-list">
+                <!-- Quest items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Quest Details Panel (slides in) -->
+        <div id="quest-details" class="quest-details hidden">
+            <button class="close-btn" onclick="closeQuestDetails()">✖</button>
+            <div id="quest-content">
+                <h2 id="quest-name"></h2>
+                <div class="quest-meta">
+                    <span class="difficulty" id="quest-difficulty"></span>
+                    <span class="length" id="quest-length"></span>
+                    <span class="qp-reward" id="quest-qp"></span>
+                </div>
+
+                <h3>📋 Requirements</h3>
+                <div id="quest-requirements"></div>
+
+                <h3>🎁 Rewards</h3>
+                <div id="quest-rewards"></div>
+
+                <h3>📖 Quick Guide</h3>
+                <div id="quest-steps"></div>
+
+                <button class="start-quest-btn" onclick="startQuestGuide()">
+                    🚀 Start Quest Guide
+                </button>
+            </div>
+        </div>
+
+        <!-- Map Tab -->
+        <div id="map-tab" class="tab-content">
+            <div class="map-controls">
+                <button id="center-player">📍 Center on Me</button>
+                <button id="show-teleports">✨ Show Teleports</button>
+                <button id="toggle-path">🛤️ Toggle Path</button>
+            </div>
+            <div id="world-map" class="world-map">
+                <canvas id="map-canvas"></canvas>
+                <div id="map-overlay" class="map-overlay">
+                    <!-- Arrow overlays will be rendered here -->
+                </div>
+            </div>
+            <div class="path-info">
+                <h3>📍 Navigation</h3>
+                <div id="path-steps"></div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks-tab" class="tab-content">
+            <h2>Achievement Diaries & Tasks</h2>
+            <div class="task-categories">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="achievements">Achievements</button>
+                <button class="category-btn" data-category="diaries">Diaries</button>
+                <button class="category-btn" data-category="daily">Daily</button>
+                <button class="category-btn" data-category="weekly">Weekly</button>
+            </div>
+            <div id="task-list" class="task-list">
+                <!-- Tasks will be populated here -->
+            </div>
+        </div>
+
+        <!-- Comp Cape Tab -->
+        <div id="comp-tab" class="tab-content">
+            <h2>🏆 Completionist Cape Requirements</h2>
+            <div class="comp-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="comp-progress-bar" style="width: 0%"></div>
+                </div>
+                <span id="comp-progress-text">0 / 30 Requirements</span>
+            </div>
+
+            <div id="comp-requirements" class="comp-list">
+                <!-- Comp requirements will be populated here -->
+            </div>
+
+            <h3>🌟 Trimmed Comp Requirements</h3>
+            <div id="trim-requirements" class="comp-list">
+                <!-- Trim requirements will be populated here -->
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <h2>⚙️ Settings</h2>
+            
+            <div class="setting-group">
+                <h3>Navigation Preferences</h3>
+                <label>
+                    <input type="checkbox" id="show-arrows" checked> Show directional arrows
+                </label>
+                <label>
+                    <input type="checkbox" id="show-distance" checked> Show distance to objective
+                </label>
+                <label>
+                    <input type="checkbox" id="auto-teleport" checked> Suggest teleports automatically
+                </label>
+                <label>
+                    <input type="checkbox" id="prefer-cheap"> Prefer cheap routes over fast
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <h3>Display Options</h3>
+                <label>
+                    <input type="checkbox" id="compact-mode"> Compact mode
+                </label>
+                <label>
+                    <input type="checkbox" id="dark-theme"> Dark theme
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <h3>Data Management</h3>
+                <button onclick="exportProgress()">📤 Export Progress</button>
+                <button onclick="importProgress()">📥 Import Progress</button>
+                <button onclick="resetProgress()">🔄 Reset All Data</button>
+            </div>
+
+            <div class="setting-group">
+                <h3>About</h3>
+                <p>RS3 Ultimate Quest Helper v1.0.0</p>
+                <p>Made with ❤️ for the RS3 community</p>
+                <button onclick="checkForUpdates()">Check for Updates</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Arrow Overlay (for in-game overlay) -->
+    <div id="arrow-overlay" class="arrow-overlay hidden">
+        <div class="arrow-container">
+            <div class="direction-arrow" id="direction-arrow">➤</div>
+            <div class="distance-text" id="distance-text">0 tiles</div>
+            <div class="objective-text" id="objective-text">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@alt1/base@latest/dist/index.bundle.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/quests.js"></script>
+    <script src="js/pathfinding.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/wiki-api.js"></script>
+</body>
+</html>
