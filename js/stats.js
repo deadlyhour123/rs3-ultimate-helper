@@ -1,4 +1,4 @@
-// RS3 Stats Fetcher - Pulls data from Adventurer's Log
+// RS3 Stats Fetcher - Enhanced with Event Dispatching
 console.log('Stats fetcher loading...');
 
 // Stats state
@@ -28,209 +28,20 @@ function isValidRSUsername(username) {
            pattern.test(username);
 }
 
-// Fetch stats from Adventurer's Log
-async function fetchAdventurersLog(username) {
-    console.log('Fetching stats for:', username);
-    
-    if (!isValidRSUsername(username)) {
-        throw new Error('Invalid RuneScape username format');
-    }
-    
-    StatsData.isLoading = true;
-    updateLoadingState(true);
-    
-    try {
-        // Clean username for URL
-        const cleanUsername = username.trim().replace(/\s+/g, '+');
-        const url = `https://secure.runescape.com/m=adventurers-log/profile?searchName=${cleanUsername}`;
-        
-        // Use a CORS proxy to fetch the data
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        
-        console.log('Fetching from:', proxyUrl);
-        
-        const response = await fetch(proxyUrl);
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch profile (${response.status})`);
+// Dispatch custom event when stats are updated
+function dispatchStatsUpdateEvent() {
+    const event = new CustomEvent('rs3helper_stats_updated', {
+        detail: {
+            username: StatsData.username,
+            totalLevel: StatsData.totalLevel,
+            questsComplete: StatsData.questsComplete,
+            questPoints: StatsData.questPoints,
+            questList: StatsData.questList,
+            timestamp: StatsData.lastUpdated
         }
-        
-        const html = await response.text();
-        
-        // Parse the HTML to extract stats
-        const stats = parseAdventurersLog(html, username);
-        
-        if (!stats) {
-            throw new Error('Could not find player profile. Please check the username.');
-        }
-        
-        // Update stats data
-        StatsData.username = username;
-        StatsData.totalLevel = stats.totalLevel;
-        StatsData.questsComplete = stats.questsComplete;
-        StatsData.questPoints = stats.questPoints;
-        StatsData.lastUpdated = new Date().toISOString();
-        
-        // Save to localStorage
-        saveStatsData();
-        
-        // Update UI
-        updateStatsDisplay();
-        
-        console.log('Stats fetched successfully:', stats);
-        
-        return stats;
-        
-    } catch (error) {
-        console.error('Error fetching stats:', error);
-        throw error;
-    } finally {
-        StatsData.isLoading = false;
-        updateLoadingState(false);
-    }
-}
-
-// Parse HTML from Adventurer's Log
-function parseAdventurersLog(html, username) {
-    console.log('Parsing Adventurer\'s Log HTML...');
-    
-    try {
-        // Create a DOM parser
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Extract total level
-        let totalLevel = 0;
-        const totalLevelElement = doc.querySelector('.stats-total-level, .plog-stats__total-level, [class*="total-level"]');
-        if (totalLevelElement) {
-            const levelText = totalLevelElement.textContent.trim();
-            totalLevel = parseInt(levelText.replace(/\D/g, '')) || 0;
-        } else {
-            // Try alternate method - look for any element with total level
-            const allText = doc.body.textContent;
-            const totalLevelMatch = allText.match(/Total Level[:\s]+(\d+)/i) || 
-                                   allText.match(/(\d{3,4})\s*Total/i);
-            if (totalLevelMatch) {
-                totalLevel = parseInt(totalLevelMatch[1]);
-            }
-        }
-        
-        // Extract quest points
-        let questPoints = 0;
-        const questPointsElement = doc.querySelector('.stats-quest-points, .plog-stats__quest-points, [class*="quest-points"]');
-        if (questPointsElement) {
-            const qpText = questPointsElement.textContent.trim();
-            questPoints = parseInt(qpText.replace(/\D/g, '')) || 0;
-        } else {
-            // Try alternate method
-            const allText = doc.body.textContent;
-            const qpMatch = allText.match(/Quest Points?[:\s]+(\d+)/i) ||
-                           allText.match(/(\d+)\s*Quest Points?/i);
-            if (qpMatch) {
-                questPoints = parseInt(qpMatch[1]);
-            }
-        }
-        
-        // Calculate quests complete (approximate from quest points)
-        // Average quest gives ~2-3 QP, so rough estimate
-        const questsComplete = Math.floor(questPoints / 2.5);
-        
-        // Verify we found at least some data
-        if (totalLevel === 0 && questPoints === 0) {
-            console.warn('Could not extract stats from page');
-            return null;
-        }
-        
-        return {
-            totalLevel,
-            questsComplete,
-            questPoints
-        };
-        
-    } catch (error) {
-        console.error('Error parsing HTML:', error);
-        return null;
-    }
-}
-
-// Check if we're running in Alt1 or browser
-function isInAlt1() {
-    return typeof alt1 !== 'undefined' && alt1.currentWorld !== undefined;
-}
-
-// Multiple CORS proxy strategies
-async function fetchWithCORS(url, options = {}) {
-    console.log('Fetching:', url);
-    
-    // Strategy 1: Try direct fetch (works in Alt1)
-    if (isInAlt1() || options.tryDirect) {
-        try {
-            console.log('Trying direct fetch...');
-            const response = await fetch(url, {
-                mode: 'cors',
-                credentials: 'omit'
-            });
-            if (response.ok) {
-                console.log('✅ Direct fetch succeeded');
-                return response;
-            }
-        } catch (error) {
-            console.warn('❌ Direct fetch failed:', error.message);
-        }
-    }
-    
-    // Strategy 2: Try AllOrigins proxy (most reliable)
-    try {
-        console.log('Trying AllOrigins proxy...');
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✅ AllOrigins proxy succeeded');
-            // Return a response-like object
-            return {
-                ok: true,
-                json: async () => JSON.parse(data.contents),
-                text: async () => data.contents,
-                status: 200
-            };
-        }
-    } catch (error) {
-        console.warn('❌ AllOrigins proxy failed:', error.message);
-    }
-    
-    // Strategy 3: Try CORS.SH proxy
-    try {
-        console.log('Trying CORS.SH proxy...');
-        const proxyUrl = `https://cors.sh/${url}`;
-        const response = await fetch(proxyUrl, {
-            headers: {
-                'x-cors-api-key': 'temp_' + Math.random().toString(36).substring(7)
-            }
-        });
-        if (response.ok) {
-            console.log('✅ CORS.SH proxy succeeded');
-            return response;
-        }
-    } catch (error) {
-        console.warn('❌ CORS.SH proxy failed:', error.message);
-    }
-    
-    // Strategy 4: Try CORS Anywhere public
-    try {
-        console.log('Trying CORS Anywhere...');
-        const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
-        const response = await fetch(proxyUrl);
-        if (response.ok) {
-            console.log('✅ CORS Anywhere succeeded');
-            return response;
-        }
-    } catch (error) {
-        console.warn('❌ CORS Anywhere failed:', error.message);
-    }
-    
-    // All strategies failed
-    throw new Error('CORS_FAILED');
+    });
+    window.dispatchEvent(event);
+    console.log('Stats update event dispatched');
 }
 
 // Fetch from RuneMetrics API (Profile + Quests + Activities)
@@ -245,7 +56,7 @@ async function fetchFromRuneMetrics(username) {
         const profileUrl = `https://apps.runescape.com/runemetrics/profile/profile?user=${encodeURIComponent(cleanUsername)}&activities=20`;
         console.log('Profile URL:', profileUrl);
         
-        const profileResponse = await fetchWithCORS(profileUrl);
+        const profileResponse = await fetch(profileUrl);
         
         if (!profileResponse.ok) {
             throw new Error(`Profile not found (${profileResponse.status}). Make sure your profile is public in RuneScape settings.`);
@@ -265,7 +76,6 @@ async function fetchFromRuneMetrics(username) {
         const totalQuests = questsStarted + questsComplete + questsNotStarted;
         
         // Calculate quest points (approximate based on completion)
-        // Average quest gives about 2-3 QP, but we'll fetch exact from quests API
         let questPoints = Math.floor(questsComplete * 2.5);
         
         // Extract activities if available
@@ -283,7 +93,7 @@ async function fetchFromRuneMetrics(username) {
             const questsUrl = `https://apps.runescape.com/runemetrics/quests?user=${encodeURIComponent(cleanUsername)}`;
             console.log('Fetching quests from:', questsUrl);
             
-            const questsResponse = await fetchWithCORS(questsUrl);
+            const questsResponse = await fetch(questsUrl);
             
             if (questsResponse.ok) {
                 const questsData = await questsResponse.json();
@@ -326,7 +136,120 @@ async function fetchFromRuneMetrics(username) {
     }
 }
 
-// Fetch stats using best available method
+// Parse HTML from Adventurer's Log (fallback method)
+function parseAdventurersLog(html, username) {
+    console.log('Parsing Adventurer\'s Log HTML...');
+    
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Extract total level
+        let totalLevel = 0;
+        const totalLevelElement = doc.querySelector('.stats-total-level, .plog-stats__total-level, [class*="total-level"]');
+        if (totalLevelElement) {
+            const levelText = totalLevelElement.textContent.trim();
+            totalLevel = parseInt(levelText.replace(/\D/g, '')) || 0;
+        } else {
+            const allText = doc.body.textContent;
+            const totalLevelMatch = allText.match(/Total Level[:\s]+(\d+)/i) || 
+                                   allText.match(/(\d{3,4})\s*Total/i);
+            if (totalLevelMatch) {
+                totalLevel = parseInt(totalLevelMatch[1]);
+            }
+        }
+        
+        // Extract quest points
+        let questPoints = 0;
+        const questPointsElement = doc.querySelector('.stats-quest-points, .plog-stats__quest-points, [class*="quest-points"]');
+        if (questPointsElement) {
+            const qpText = questPointsElement.textContent.trim();
+            questPoints = parseInt(qpText.replace(/\D/g, '')) || 0;
+        } else {
+            const allText = doc.body.textContent;
+            const qpMatch = allText.match(/Quest Points?[:\s]+(\d+)/i) ||
+                           allText.match(/(\d+)\s*Quest Points?/i);
+            if (qpMatch) {
+                questPoints = parseInt(qpMatch[1]);
+            }
+        }
+        
+        // Calculate quests complete (approximate from quest points)
+        const questsComplete = Math.floor(questPoints / 2.5);
+        
+        if (totalLevel === 0 && questPoints === 0) {
+            console.warn('Could not extract stats from page');
+            return null;
+        }
+        
+        return {
+            totalLevel,
+            questsComplete,
+            questPoints
+        };
+        
+    } catch (error) {
+        console.error('Error parsing HTML:', error);
+        return null;
+    }
+}
+
+// Fetch stats from Adventurer's Log (fallback)
+async function fetchAdventurersLog(username) {
+    console.log('Fetching stats from Adventurer\'s Log for:', username);
+    
+    if (!isValidRSUsername(username)) {
+        throw new Error('Invalid RuneScape username format');
+    }
+    
+    StatsData.isLoading = true;
+    updateLoadingState(true);
+    
+    try {
+        const cleanUsername = username.trim().replace(/\s+/g, '+');
+        const url = `https://secure.runescape.com/m=adventurers-log/profile?searchName=${cleanUsername}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        
+        console.log('Fetching from:', proxyUrl);
+        
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch profile (${response.status})`);
+        }
+        
+        const html = await response.text();
+        const stats = parseAdventurersLog(html, username);
+        
+        if (!stats) {
+            throw new Error('Could not find player profile. Please check the username.');
+        }
+        
+        // Update stats data
+        StatsData.username = username;
+        StatsData.totalLevel = stats.totalLevel;
+        StatsData.questsComplete = stats.questsComplete;
+        StatsData.questPoints = stats.questPoints;
+        StatsData.lastUpdated = new Date().toISOString();
+        
+        saveStatsData();
+        updateStatsDisplay();
+        dispatchStatsUpdateEvent();
+        
+        console.log('Stats fetched successfully:', stats);
+        
+        return stats;
+        
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+        throw error;
+    } finally {
+        StatsData.isLoading = false;
+        updateLoadingState(false);
+    }
+}
+
+// Fetch player stats using best available method
 async function fetchPlayerStats(username) {
     console.log('Fetching player stats for:', username);
     
@@ -351,6 +274,7 @@ async function fetchPlayerStats(username) {
             
             saveStatsData();
             updateStatsDisplay();
+            dispatchStatsUpdateEvent();
             
             return stats;
             
@@ -433,7 +357,7 @@ function updateStatsDisplay() {
         if (el) el.textContent = StatsData.username || 'Not detected';
     });
     
-    // Update stats in dashboard (if elements exist)
+    // Update stats in dashboard
     const totalLevelEl = document.getElementById('totalLevel');
     if (totalLevelEl) {
         totalLevelEl.textContent = StatsData.totalLevel || '?';
@@ -459,7 +383,6 @@ function updateStatsDisplay() {
     // Update activities display if available
     if (StatsData.activities && StatsData.activities.length > 0) {
         console.log('Recent activities:', StatsData.activities);
-        // Could add a UI section to display recent activities
     }
     
     // Update quest list if available
@@ -527,6 +450,7 @@ function promptManualStats() {
     
     saveStatsData();
     updateStatsDisplay();
+    dispatchStatsUpdateEvent();
     
     alert(`Stats saved for ${username}!\n\nTotal Level: ${StatsData.totalLevel}\nQuests Complete: ${StatsData.questsComplete}\nQuest Points: ${StatsData.questPoints}`);
 }
@@ -570,6 +494,9 @@ async function initStatsSystem() {
                 fetchPlayerStats(username);
             }
         }, 1000);
+    } else if (StatsData.questList && StatsData.questList.length > 0) {
+        // If we have cached data, dispatch update event
+        setTimeout(() => dispatchStatsUpdateEvent(), 500);
     }
 }
 
