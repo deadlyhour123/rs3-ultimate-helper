@@ -1,0 +1,21 @@
+{
+  "appName": "RS3 Ultimate Helper",
+  "description": "Complete quest helper with progress tracking, filters, and pathfinding for RS3",
+  "appUrl": "index.html",
+  "configUrl": "appconfig.json",
+  "iconUrl": "",
+  "defaultWidth": 450,
+  "defaultHeight": 700,
+  "minWidth": 350,
+  "minHeight": 500,
+  "maxWidth": 1200,
+  "maxHeight": 1000,
+  "permissions": [
+    "pixel",
+    "overlay",
+    "gamestate"
+  ],
+  "activators": [],
+  "author": "deadlyhour123",
+  "version": "1.0.1"
+}
